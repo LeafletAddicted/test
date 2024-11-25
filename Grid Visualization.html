@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Grid Visualization</title>
+    <script src="https://unpkg.com/gridviz/dist/gridviz.min.js"></script>
+    <style>
+        #map {
+            width: 1000px;
+            height: 800px;
+        }
+    </style>
+</head>
+<body>
+    <div id="map"></div>
+    <script>
+        const map = new gridviz.Map(document.getElementById('map'), { x: 4500000, y: 2900000, z: 3000 });
+
+        const dataset = new gridviz.CSVGrid(map, "https://raw.githubusercontent.com/LeafletAddicted/test/refs/heads/main/C21a_vis_test2.csv", 10000);
+
+        const colorFunction = (cell) => {
+            if (cell.lsu > 40000) return "#993404";
+            else if (cell.lsu > 20000) return "#d95f0e";
+            else if (cell.lsu > 10000) return "#fe9929";
+            else if (cell.lsu > 5000) return "#fec44f";
+            else if (cell.lsu > 1000) return "#fee391";
+            else return "#ffffd4";
+        };
+
+        const style = new gridviz.ShapeColorSizeStyle({ color: colorFunction });
+
+        map.layers = [new gridviz.GridLayer(dataset, [style])];
+    </script>
+</body>
+</html>
