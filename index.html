@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Grid Visualization</title>
+    <script src="https://unpkg.com/gridviz/dist/gridviz.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/gridviz-eurostat@2.0.2"></script>
+    <script src="https://cdn.jsdelivr.net/npm/d3-color@3"></script>
+    <script src="https://cdn.jsdelivr.net/npm/d3-interpolate@3"></script>
+    <script src="https://cdn.jsdelivr.net/npm/d3-scale-chromatic@3"></script>
+    <style>
+        #map { height: 800px; width: 100%; }
+    </style>
+</head>
+<body>
+    <div id="map"></div>
+    <script>
+        const map = new gridviz.Map(document.getElementById('map'), {
+            x: 4500000, y: 2900000, z: 3000
+        }).addZoomButtons();
+
+        const dataset = new gridviz.CSVGrid(map, 'https://raw.githubusercontent.com/LeafletAddicted/test/refs/heads/main/C21a_vis_test2.csv', 10000, {
+            mixedResolution: (cell) => cell.res,
+            preprocess: (cell) => {
+                cell.density = +cell.lsu / (cell.res * cell.res);
+            },
+        });
+
+        const colorScale = d3.interpolateYlOrRd;
+        const scale = gridviz.logarithmicScale(-4);
+        const style = new gridviz.ShapeColorSizeStyle({
+            viewScale: (cells) => {
+                let max = undefined, min = undefined;
+                cells.forEach(cell => {
+                    const v = cell.density;
+                    if (max === undefined || max < v) max = v;
+                    if (min === undefined || min > v) min = v;
+                });
+                return [min, max];
+            },
+            color: (cell, res, z, [min, max]) => colorScale(scale((cell.density - min) / (max - min))),
+            size: dataset.mixedResolution,
+            offset: (cell, res, z) => ({ dx: -0.5 * res * (1 - dataset.mixedResolution(cell) / res), dy: -0.5 * res * (1 - dataset.mixedResolution(cell) / res) }),
+            blendOperation: (z) => (z < 100 ? 'multiply' : 'source-over'),
+        });
+
+        const layer = new gridviz.GridLayer(dataset, [style]);
+        map.layers = [layer];
+        map.redraw();
+    </script>
+</body>
+</html>
